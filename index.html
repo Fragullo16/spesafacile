@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1C1C1E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SpesaFacile">
+  <title>SpesaFacile</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #F2F2F7; color: #1C1C1E; max-width: 480px; margin: 0 auto;
+      min-height: 100vh; min-height: 100dvh;
+      padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+    }
+    .header {
+      background: linear-gradient(135deg, #1C1C1E 0%, #2C2C2E 100%);
+      padding: 48px 20px 24px; color: #fff;
+    }
+    .header-inner { display: flex; align-items: center; gap: 10px; }
+    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+    .header p { margin-top: 6px; font-size: 14px; color: #98989F; }
+
+    .nav {
+      display: flex; background: #fff; border-bottom: 1px solid #E5E5EA;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav button {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 10px 0; border: none; background: transparent; color: #8E8E93;
+      cursor: pointer; font-family: inherit; font-size: 11px; gap: 2px;
+    }
+    .nav button.active { color: #007AFF; border-bottom: 2px solid #007AFF; }
+    .nav button span.icon { font-size: 18px; }
+
+    .content { padding: 16px 16px 100px; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Turn card */
+    .turn-card {
+      background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+      border-radius: 16px; padding: 20px 24px; color: #fff; margin-bottom: 16px; text-align: center;
+    }
+    .turn-card .label { font-size: 13px; opacity: 0.85; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .turn-card .name { font-size: 28px; font-weight: 800; margin: 6px 0; }
+    .turn-card .sub { font-size: 13px; opacity: 0.75; }
+
+    /* Summary */
+    .summary-row { display: flex; gap: 10px; margin-bottom: 20px; }
+    .summary-card {
+      flex: 1; background: #fff; border-radius: 14px; padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .summary-card .label { font-size: 12px; color: #8E8E93; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+    .summary-card .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+
+    .section-title { font-size: 18px; font-weight: 700; margin: 0 0 12px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+
+    /* Cards */
+    .card {
+      background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .card-header { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center;
+      justify-content: center; color: #fff; font-weight: 700; font-size: 18px; flex-shrink: 0;
+    }
+    .avatar-sm {
+      width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center;
+      justify-content: center; color: #fff; font-weight: 600; font-size: 14px; flex-shrink: 0;
+    }
+    .stat-name { font-weight: 600; font-size: 16px; }
+    .stat-meta { color: #8E8E93; font-size: 13px; }
+    .stat-total { font-weight: 700; font-size: 17px; text-align: right; }
+    .stat-diff { font-size: 13px; font-weight: 600; text-align: right; }
+    .bar-bg { height: 6px; background: #F2F2F7; border-radius: 3px; margin-top: 12px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+    /* Turn list */
+    .turn-list { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .turn-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #F2F2F7; font-size: 15px; }
+    .turn-num {
+      width: 22px; height: 22px; border-radius: 7px; background: #F2F2F7;
+      display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #8E8E93;
+    }
+    .turn-badge { background: #007AFF; color: #fff; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+
+    /* Expense card */
+    .expense-name { font-weight: 600; font-size: 15px; }
+    .expense-date { font-size: 13px; color: #8E8E93; }
+    .expense-total { font-weight: 700; font-size: 18px; }
+    .prodotti-list { margin-top: 10px; padding-top: 10px; border-top: 1px solid #F2F2F7; }
+    .prodotto-item { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #3A3A3C; padding: 3px 0; }
+    .prodotto-item .dot { color: #C7C7CC; }
+    .prodotto-item .prezzo { color: #8E8E93; font-size: 13px; }
+    .expense-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F2F2F7; }
+    .action-btn { background: transparent; border: none; font-size: 13px; cursor: pointer; color: #007AFF; padding: 4px 0; font-family: inherit; }
+    .action-btn.danger { color: #FF3B30; }
+
+    /* Form */
+    .form-label {
+      display: block; font-size: 13px; font-weight: 600; color: #8E8E93;
+      margin-bottom: 6px; margin-top: 16px; text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .form-input {
+      width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #E5E5EA;
+      font-size: 16px; background: #fff; margin-bottom: 4px; font-family: inherit;
+      box-sizing: border-box; outline: none; -webkit-appearance: none;
+    }
+    .form-input:focus { border-color: #007AFF; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      padding: 8px 16px; border-radius: 20px; border: 2px solid #E5E5EA;
+      background: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: all 0.2s;
+    }
+    .chip.selected { color: #fff; }
+    .prodotto-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .prodotto-row .form-input { margin-bottom: 0; }
+    .remove-btn {
+      width: 32px; height: 32px; border-radius: 8px; border: none; background: #FFE5E5;
+      color: #FF3B30; font-size: 14px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+    }
+    .calc-btn {
+      width: 100%; padding: 10px; border-radius: 10px; border: 1px dashed #007AFF;
+      background: rgba(0,122,255,0.05); color: #007AFF; font-size: 14px;
+      font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 8px; margin-bottom: 4px;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      padding: 14px 24px; border-radius: 12px; border: none; background: #007AFF;
+      color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit;
+      margin-top: 16px; width: 100%;
+    }
+    .btn-secondary {
+      padding: 14px 24px; border-radius: 12px; border: 1px solid #E5E5EA; background: #fff;
+      color: #1C1C1E; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; margin-top: 8px;
+    }
+    .btn-small {
+      padding: 6px 14px; border-radius: 8px; border: none; background: #007AFF;
+      color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .btn-danger {
+      padding: 14px 24px; border-radius: 12px; border: 1px solid #FF3B30; background: transparent;
+      color: #FF3B30; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; margin-top: 32px;
+    }
+
+    /* Member card */
+    .member-card {
+      display: flex; align-items: center; gap: 12px; background: #fff;
+      border-radius: 14px; padding: 12px 16px; margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .delete-btn { background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 4px; }
+    .add-row { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
+    .add-row .form-input { flex: 1; margin-bottom: 0; }
+    .add-row .btn-primary { width: auto; margin-top: 0; }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: #8E8E93; }
+    .empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
+
+    .prodotti-header { display: flex; justify-content: space-between; align-items: center; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <span style="font-size:28px">🏠</span>
+    <h1>SpesaFacile</h1>
+  </div>
+  <p>Gestione spese coinquilini</p>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="showPage('home')"><span class="icon">📊</span>Home</button>
+  <button onclick="showPage('spese')"><span class="icon">🧾</span>Spese</button>
+  <button onclick="showPage('nuova')"><span class="icon">➕</span>Nuova</button>
+  <button onclick="showPage('gruppo')"><span class="icon">👥</span>Gruppo</button>
+</div>
+
+<div class="content">
+  <div id="page-home" class="page active"></div>
+  <div id="page-spese" class="page"></div>
+  <div id="page-nuova" class="page"></div>
+  <div id="page-gruppo" class="page"></div>
+</div>
+
+<script>
+const STORAGE_KEY = 'spese-coinquilini';
+const COLORS = ['#E07A5F','#3D405B','#81B29A','#F2CC8F','#5E81AC','#BF616A','#A3BE8C','#B48EAD'];
+
+let data = { coinquilini: [], spese: [] };
+let editingId = null;
+let prodotti = [{ nome: '', prezzo: '' }];
+
+// --- Storage ---
+function load() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) data = JSON.parse(r); } catch(e) {}
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+// --- Utils ---
+const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const getColor = i => COLORS[i % COLORS.length];
+const getColorById = id => { const i = data.coinquilini.findIndex(c => c.id === id); return getColor(i >= 0 ? i : 0); };
+const getName = id => (data.coinquilini.find(c => c.id === id) || {}).nome || '?';
+const fmtDate = d => new Date(d).toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' });
+const fmtCur = n => new Intl.NumberFormat('it-IT', { style:'currency', currency:'EUR' }).format(n);
+
+function getStats() {
+  const stats = data.coinquilini.map((c, i) => {
+    const sp = data.spese.filter(s => s.coinquilinoId === c.id);
+    const totale = sp.reduce((a, s) => a + s.totale, 0);
+    const volte = sp.length;
+    const ultima = sp.length > 0 ? sp.reduce((l, s) => s.data > l.data ? s : l).data : null;
+    return { ...c, totale, volte, ultima, color: getColor(i) };
+  });
+  const tot = stats.reduce((a, s) => a + s.totale, 0);
+  const media = data.coinquilini.length > 0 ? tot / data.coinquilini.length : 0;
+  return { stats, tot, media };
+}
+
+function getTurnOrder() {
+  return [...getStats().stats].sort((a, b) => {
+    const aS = data.spese.filter(s => s.coinquilinoId === a.id);
+    const bS = data.spese.filter(s => s.coinquilinoId === b.id);
+    const aD = aS.length > 0 ? aS.reduce((l,s) => s.data > l.data ? s : l).data : '1900-01-01';
+    const bD = bS.length > 0 ? bS.reduce((l,s) => s.data > l.data ? s : l).data : '1900-01-01';
+    if (a.volte === 0 && b.volte > 0) return -1;
+    if (b.volte === 0 && a.volte > 0) return 1;
+    return aD.localeCompare(bD);
+  });
+}
+
+function getNextTurn() {
+  if (data.coinquilini.length === 0) return null;
+  if (data.spese.length === 0) return { ...data.coinquilini[0], count: 0 };
+  const order = getTurnOrder();
+  return order[0];
+}
+
+// --- Navigation ---
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav button')[['home','spese','nuova','gruppo'].indexOf(id)].classList.add('active');
+  if (id === 'nuova' && !editingId) resetForm();
+  render();
+}
+
+// --- Render ---
+function render() {
+  renderHome();
+  renderSpese();
+  renderNuova();
+  renderGruppo();
+}
+
+function renderHome() {
+  const el = document.getElementById('page-home');
+  const { stats, tot, media } = getStats();
+  const next = getNextTurn();
+  let h = '';
+
+  if (next && data.coinquilini.length > 1) {
+    h += `<div class="turn-card">
+      <div class="label">Prossima spesa tocca a</div>
+      <div class="name">${next.nome}</div>
+      <div class="sub">${next.volte === 0 ? 'Non ha ancora fatto nessuna spesa' : next.ultima ? 'Ultima spesa: ' + fmtDate(next.ultima) : ''}</div>
+    </div>`;
+  }
+
+  if (data.coinquilini.length === 0) {
+    h += `<div class="empty-state"><div class="emoji">👥</div><p>Inizia aggiungendo i coinquilini nella sezione Gruppo</p>
+      <button class="btn-primary" onclick="showPage('gruppo')">Aggiungi coinquilini</button></div>`;
+  } else {
+    h += `<div class="summary-row">
+      <div class="summary-card"><div class="label">Totale speso</div><div class="value">${fmtCur(tot)}</div></div>
+      <div class="summary-card"><div class="label">Media/persona</div><div class="value">${fmtCur(media)}</div></div>
+    </div>`;
+
+    h += `<h2 class="section-title">Riepilogo per coinquilino</h2>`;
+    stats.forEach(s => {
+      const diff = s.totale - media;
+      const diffColor = diff >= 0 ? '#34C759' : '#FF3B30';
+      const pct = tot > 0 ? Math.min((s.totale / tot) * 100, 100) : 0;
+      h += `<div class="card"><div class="card-header">
+        <div class="avatar" style="background:${s.color}">${s.nome.charAt(0).toUpperCase()}</div>
+        <div style="flex:1"><div class="stat-name">${s.nome}</div><div class="stat-meta">${s.volte} ${s.volte===1?'spesa':'spese'}</div></div>
+        <div><div class="stat-total">${fmtCur(s.totale)}</div><div class="stat-diff" style="color:${diffColor}">${diff>=0?'+':''}${fmtCur(diff)}</div></div>
+      </div>
+      ${tot > 0 ? `<div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${s.color}"></div></div>` : ''}
+      </div>`;
+    });
+
+    h += `<h2 class="section-title">Ordine turnazione</h2><div class="turn-list">`;
+    getTurnOrder().forEach((s, i) => {
+      h += `<div class="turn-item">
+        <span class="turn-num">${i+1}</span>
+        <div class="avatar-sm" style="background:${s.color}">${s.nome.charAt(0).toUpperCase()}</div>
+        <span style="flex:1">${s.nome}</span>
+        ${i===0 ? '<span class="turn-badge">Prossimo</span>' : ''}
+      </div>`;
+    });
+    h += `</div>`;
+  }
+  el.innerHTML = h;
+}
+
+function renderSpese() {
+  const el = document.getElementById('page-spese');
+  let h = `<div class="page-header"><h2 class="section-title">Storico spese</h2>
+    <button class="btn-small" onclick="editingId=null;resetForm();showPage('nuova')">+ Nuova</button></div>`;
+
+  if (data.spese.length === 0) {
+    h += `<div class="empty-state"><div class="emoji">🧾</div><p>Nessuna spesa registrata</p></div>`;
+  }
+
+  data.spese.forEach(s => {
+    h += `<div class="card"><div class="card-header">
+      <div class="avatar-sm" style="background:${getColorById(s.coinquilinoId)}">${getName(s.coinquilinoId).charAt(0).toUpperCase()}</div>
+      <div style="flex:1"><div class="expense-name">${getName(s.coinquilinoId)}</div><div class="expense-date">${fmtDate(s.data)}</div></div>
+      <div class="expense-total">${fmtCur(s.totale)}</div>
+    </div>`;
+    if (s.prodotti && s.prodotti.length > 0) {
+      h += `<div class="prodotti-list">`;
+      s.prodotti.forEach(p => {
+        h += `<div class="prodotto-item"><span class="dot">•</span><span style="flex:1">${p.nome}</span>${p.prezzo ? `<span class="prezzo">${fmtCur(parseFloat(p.prezzo))}</span>` : ''}</div>`;
+      });
+      h += `</div>`;
+    }
+    h += `<div class="expense-actions">
+      <button class="action-btn" onclick="editSpesa('${s.id}')">✏️ Modifica</button>
+      <button class="action-btn danger" onclick="deleteSpesa('${s.id}')">🗑 Elimina</button>
+    </div></div>`;
+  });
+  el.innerHTML = h;
+}
+
+function renderNuova() {
+  const el = document.getElementById('page-nuova');
+  if (data.coinquilini.length === 0) {
+    el.innerHTML = `<div class="empty-state"><p>Aggiungi prima i coinquilini</p>
+      <button class="btn-primary" onclick="showPage('gruppo')">Vai al Gruppo</button></div>`;
+    return;
+  }
+
+  const selId = document.getElementById('sel-coinquilino')?.value || editingId ? undefined : data.coinquilini[0]?.id;
+  let h = `<h2 class="section-title">${editingId ? 'Modifica spesa' : 'Nuova spesa'}</h2>`;
+  h += `<label class="form-label">Chi ha fatto la spesa?</label><div class="chip-row">`;
+  data.coinquilini.forEach((c, i) => {
+    h += `<button class="chip" id="chip-${c.id}" onclick="selectCoinquilino('${c.id}')" style="${c.id === (window._selectedCoinquilino || data.coinquilini[0]?.id) ? `background:${getColor(i)};color:#fff;border-color:${getColor(i)}` : ''}">${c.nome}</button>`;
+  });
+  h += `</div>`;
+
+  h += `<label class="form-label">Data</label>
+    <input type="date" class="form-input" id="inp-data" value="${window._formData || new Date().toISOString().split('T')[0]}">`;
+
+  h += `<div class="prodotti-header"><label class="form-label">Prodotti</label>
+    <button class="btn-small" onclick="addProdotto()">+ Prodotto</button></div>`;
+
+  prodotti.forEach((p, i) => {
+    h += `<div class="prodotto-row">
+      <input class="form-input" style="flex:2" placeholder="Nome prodotto" value="${p.nome}" oninput="prodotti[${i}].nome=this.value">
+      <input class="form-input" style="flex:1" placeholder="€" type="number" step="0.01" inputmode="decimal" value="${p.prezzo}" oninput="prodotti[${i}].prezzo=this.value">
+      ${prodotti.length > 1 ? `<button class="remove-btn" onclick="removeProdotto(${i})">✕</button>` : ''}
+    </div>`;
+  });
+
+  h += `<button class="calc-btn" onclick="calcTotale()">Calcola totale dai prodotti</button>`;
+  h += `<label class="form-label">Totale spesa (€)</label>
+    <input type="number" step="0.01" inputmode="decimal" placeholder="0.00" class="form-input" id="inp-totale" value="${window._formTotale || ''}" style="font-size:22px;font-weight:700">`;
+  h += `<button class="btn-primary" onclick="saveSpesa()">${editingId ? '💾 Salva modifiche' : '✅ Registra spesa'}</button>`;
+  if (editingId) {
+    h += `<button class="btn-secondary" onclick="editingId=null;resetForm();showPage('spese')">Annulla</button>`;
+  }
+  el.innerHTML = h;
+}
+
+function renderGruppo() {
+  const el = document.getElementById('page-gruppo');
+  let h = `<h2 class="section-title">Coinquilini</h2>
+    <div class="add-row">
+      <input class="form-input" id="inp-nome" placeholder="Nome coinquilino" onkeydown="if(event.key==='Enter')addCoinquilino()">
+      <button class="btn-primary" onclick="addCoinquilino()">Aggiungi</button>
+    </div>`;
+
+  if (data.coinquilini.length === 0) {
+    h += `<div class="empty-state"><div class="emoji">🏠</div><p>Aggiungi i coinquilini per iniziare</p></div>`;
+  }
+
+  data.coinquilini.forEach((c, i) => {
+    const sp = data.spese.filter(s => s.coinquilinoId === c.id);
+    const tot = sp.reduce((a, s) => a + s.totale, 0);
+    h += `<div class="member-card">
+      <div class="avatar" style="background:${getColor(i)}">${c.nome.charAt(0).toUpperCase()}</div>
+      <div style="flex:1"><div style="font-weight:600;font-size:16px">${c.nome}</div>
+        <div style="color:#8E8E93;font-size:13px">${sp.length} spese · ${fmtCur(tot)}</div></div>
+      <button class="delete-btn" onclick="removeCoinquilino('${c.id}')">🗑</button>
+    </div>`;
+  });
+
+  if (data.spese.length > 0) {
+    h += `<button class="btn-danger" onclick="resetAll()">🗑 Reset completo</button>`;
+  }
+  el.innerHTML = h;
+}
+
+// --- Actions ---
+function selectCoinquilino(id) {
+  window._selectedCoinquilino = id;
+  renderNuova();
+}
+
+function resetForm() {
+  window._selectedCoinquilino = data.coinquilini[0]?.id || '';
+  window._formData = new Date().toISOString().split('T')[0];
+  window._formTotale = '';
+  prodotti = [{ nome: '', prezzo: '' }];
+  editingId = null;
+}
+
+function addProdotto() { prodotti.push({ nome: '', prezzo: '' }); renderNuova(); }
+function removeProdotto(i) { prodotti.splice(i, 1); renderNuova(); }
+
+function calcTotale() {
+  const sum = prodotti.reduce((a, p) => a + (parseFloat(p.prezzo) || 0), 0);
+  if (sum > 0) { window._formTotale = sum.toFixed(2); renderNuova(); }
+}
+
+function saveSpesa() {
+  const coinquilinoId = window._selectedCoinquilino || data.coinquilini[0]?.id;
+  const dateVal = document.getElementById('inp-data')?.value;
+  const totale = parseFloat(document.getElementById('inp-totale')?.value);
+  if (!coinquilinoId || !dateVal || isNaN(totale) || totale <= 0) return;
+
+  const spesa = {
+    id: editingId || genId(),
+    coinquilinoId,
+    data: dateVal,
+    totale,
+    prodotti: prodotti.filter(p => p.nome.trim()).map(p => ({ nome: p.nome.trim(), prezzo: p.prezzo }))
+  };
+
+  if (editingId) {
+    data.spese = data.spese.map(s => s.id === editingId ? spesa : s);
+  } else {
+    data.spese.push(spesa);
+  }
+  data.spese.sort((a, b) => new Date(b.data) - new Date(a.data));
+  save();
+  editingId = null;
+  resetForm();
+  showPage('spese');
+}
+
+function editSpesa(id) {
+  const s = data.spese.find(x => x.id === id);
+  if (!s) return;
+  editingId = id;
+  window._selectedCoinquilino = s.coinquilinoId;
+  window._formData = s.data;
+  window._formTotale = s.totale.toString();
+  prodotti = s.prodotti.length > 0 ? [...s.prodotti] : [{ nome: '', prezzo: '' }];
+  showPage('nuova');
+}
+
+function deleteSpesa(id) {
+  if (!confirm('Eliminare questa spesa?')) return;
+  data.spese = data.spese.filter(s => s.id !== id);
+  save(); render();
+}
+
+function addCoinquilino() {
+  const inp = document.getElementById('inp-nome');
+  const name = inp.value.trim();
+  if (!name || data.coinquilini.some(c => c.nome.toLowerCase() === name.toLowerCase())) return;
+  data.coinquilini.push({ id: genId(), nome: name });
+  save(); inp.value = ''; render();
+}
+
+function removeCoinquilino(id) {
+  if (!confirm('Rimuovere questo coinquilino e tutte le sue spese?')) return;
+  data.coinquilini = data.coinquilini.filter(c => c.id !== id);
+  data.spese = data.spese.filter(s => s.coinquilinoId !== id);
+  save(); render();
+}
+
+function resetAll() {
+  if (!confirm('Cancellare TUTTI i dati? Questa azione non è reversibile.')) return;
+  data = { coinquilini: [], spese: [] };
+  save(); render();
+}
+
+// --- Init ---
+load();
+render();
+</script>
+</body>
+</html>
